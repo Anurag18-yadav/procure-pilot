@@ -71,9 +71,12 @@ export default function App() {
         <StartupProfilePage onNavigate={navigateTo} />
       )}
 
+      {/* SIGN IN PAGE ROUTING WITH DYNAMIC ROLE REDIRECT */}
       {currentPage === 'signin' && (
         <SignInPage 
-          onSignInSuccess={() => navigateTo('dashboard')}
+          onSignInSuccess={(targetPage) => {
+            navigateTo(targetPage || (localStorage.getItem('userRole') === 'government' ? 'government-portal' : 'startup-profile'));
+          }}
           onRegisterClick={() => navigateTo('register-role')}
           onNavigate={navigateTo}
         />
