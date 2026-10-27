@@ -50,7 +50,7 @@ export default function SubmitProposalStep3({ onNext, onBack, onNavigate }) {
               onClick={() => onNavigate && onNavigate('startup-profile')}
               className="inline-flex items-center px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl text-xs font-bold hover:bg-orange-100 transition-all cursor-pointer"
             >
-              👤 My Profile
+              📊 Dashboard
             </button>
             <button
               type="button"

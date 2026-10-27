@@ -5,8 +5,9 @@ const RegisterRoleSelect = ({ onRoleSelect, onNavigate }) => {
 
   const handleSelect = (role) => {
     setLoadingRole(role);
-    // Save role to localStorage immediately
-    localStorage.setItem('userRole', role);
+    // Save role temporarily to prevent premature session login
+    localStorage.setItem('tempRole', role);
+    localStorage.removeItem('userRole');
     
     // Trigger navigation instantly for smooth UX
     if (onRoleSelect) {
@@ -32,8 +33,8 @@ const RegisterRoleSelect = ({ onRoleSelect, onNavigate }) => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 px-4">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-5xl px-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           
           {/* Startup Card */}
           <div 
@@ -70,6 +71,25 @@ const RegisterRoleSelect = ({ onRoleSelect, onNavigate }) => {
             </p>
             <span className="mt-4 text-xs font-semibold text-blue-600">
               Select Government &rarr;
+            </span>
+          </div>
+
+          {/* Domain Expert / Juror Card */}
+          <div 
+            onClick={() => handleSelect('expert')}
+            className={`bg-white p-6 rounded-2xl shadow-sm border-2 cursor-pointer transition-all transform hover:-translate-y-1 flex flex-col items-center text-center ${
+              loadingRole === 'expert' ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-500' : 'border-purple-100 hover:border-purple-500 hover:shadow-md'
+            }`}
+          >
+            <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-xs">
+              🎓
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Domain Expert</h3>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Serve on academic and technical juries, conduct double-blind proposal evaluations, and score innovation dossiers.
+            </p>
+            <span className="mt-4 text-xs font-semibold text-purple-600">
+              Select Expert &rarr;
             </span>
           </div>
 

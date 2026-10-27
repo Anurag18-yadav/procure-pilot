@@ -8,9 +8,12 @@ import RegisterStep1 from './components/RegisterStep1';
 import RegisterStep2 from './components/RegisterStep2';
 import RegisterStep3 from './components/RegisterStep3';
 import GovRegisterStep2 from './components/GovRegisterStep2';
+import ExpertRegister from './components/ExpertRegister'; // New Expert Registration Component
 import SubmitProposalStep1 from './components/SubmitProposalStep1';
 import SubmitProposalStep2 from './components/SubmitProposalStep2';
 import SubmitProposalStep3 from './components/SubmitProposalStep3';
+import SubmitProposalStep4 from './components/SubmitProposalStep4';
+import SubmitProposalStep5 from './components/SubmitProposalStep5';
 import GovernmentPortal from './components/GovernmentPortal';
 import StartupProfilePage from './components/StartupProfilePage';
 
@@ -18,13 +21,39 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   
   const [selectedRole, setSelectedRole] = useState(() => {
-    return localStorage.getItem('userRole') || 'startup';
+    return localStorage.getItem('tempRole') || localStorage.getItem('userRole') || 'startup';
   });
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash) {
+        const currentRole = localStorage.getItem('userRole') || '';
+
+        // 1. Government Portal Guard
+        if (hash === 'government-portal' && currentRole !== 'government') {
+          alert("Access Denied: Government Portal is restricted to official government accounts.");
+          window.location.hash = 'landing';
+          setCurrentPage('landing');
+          return;
+        }
+
+        // 2. Expert Dashboard Guard
+        if (hash === 'dashboard' && currentRole !== 'expert' && currentRole !== 'government') {
+          alert("Access Denied: Expert Panel / Dashboard is restricted to domain experts.");
+          window.location.hash = 'landing';
+          setCurrentPage('landing');
+          return;
+        }
+
+        // 3. Startup Profile Guard
+        if (hash === 'startup-profile' && currentRole !== 'startup') {
+          alert("Access Denied: Startup Profile is restricted to startup accounts.");
+          window.location.hash = 'landing';
+          setCurrentPage('landing');
+          return;
+        }
+
         setCurrentPage(hash);
       } else {
         setCurrentPage('landing');
@@ -40,6 +69,24 @@ export default function App() {
   }, []);
 
   const navigateTo = (page) => {
+    const currentRole = localStorage.getItem('userRole') || '';
+
+    // NAVIGATION RBAC GUARDS
+    if (page === 'government-portal' && currentRole !== 'government') {
+      alert("Access Denied! Unauthorized accounts cannot access the Government Portal.");
+      return;
+    }
+
+    if (page === 'dashboard' && currentRole !== 'expert' && currentRole !== 'government') {
+      alert("Access Denied! Only authorized Domain Experts can access the Expert Panel.");
+      return;
+    }
+
+    if (page === 'startup-profile' && currentRole !== 'startup') {
+      alert("Access Denied! This profile page is strictly for registered Startups.");
+      return;
+    }
+
     setCurrentPage(page);
     window.location.hash = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,7 +120,12 @@ export default function App() {
       {currentPage === 'signin' && (
         <SignInPage 
           onSignInSuccess={(targetPage) => {
-            navigateTo(targetPage || (localStorage.getItem('userRole') === 'government' ? 'government-portal' : 'startup-profile'));
+            const role = localStorage.getItem('userRole');
+            let defaultTarget = 'startup-profile';
+            if (role === 'government') defaultTarget = 'government-portal';
+            else if (role === 'expert') defaultTarget = 'dashboard';
+
+            navigateTo(targetPage || defaultTarget);
           }}
           onRegisterClick={() => navigateTo('register-role')}
           onNavigate={navigateTo}
@@ -91,49 +143,68 @@ export default function App() {
         <RegisterRoleSelect 
           onRoleSelect={(role) => {
             setSelectedRole(role);
-            localStorage.setItem('userRole', role);
+            localStorage.setItem('tempRole', role);
+            localStorage.removeItem('userRole'); 
             navigateTo('register-1');
           }}
           onNavigate={navigateTo}
         />
       )}
 
+      {/* DYNAMIC REGISTRATION ROUTING BASED ON SELECTED ROLE */}
       {currentPage === 'register-1' && (
-        <RegisterStep1 
-          onNext={() => navigateTo('register-2')}
-          onNavigate={navigateTo}
-        />
-      )}
-
-      {currentPage === 'register-2' && (
         selectedRole === 'government' ? (
           <GovRegisterStep2 
             onNext={() => {
+              const role = localStorage.getItem('tempRole') || 'government';
+              localStorage.setItem('userRole', role);
+              localStorage.removeItem('tempRole');
               alert("Government Department Sandbox Registration Completed Successfully!");
               navigateTo('government-portal');
             }}
-            onBack={() => navigateTo('register-1')}
+            onBack={() => navigateTo('register-role')}
+          />
+        ) : selectedRole === 'expert' ? (
+          <ExpertRegister 
+            onComplete={() => {
+              const role = localStorage.getItem('tempRole') || 'expert';
+              localStorage.setItem('userRole', role);
+              localStorage.removeItem('tempRole');
+              alert("Domain Expert Registration Completed & Verified!");
+              navigateTo('dashboard');
+            }}
+            onBack={() => navigateTo('register-role')}
           />
         ) : (
-          <RegisterStep2 
-            onComplete={() => navigateTo('register-3')}
-            onBack={() => navigateTo('register-1')}
+          <RegisterStep1 
+            onNext={() => navigateTo('register-2')}
             onNavigate={navigateTo}
           />
         )
       )}
 
+      {currentPage === 'register-2' && (
+        <RegisterStep2 
+          onComplete={() => navigateTo('register-3')}
+          onBack={() => navigateTo('register-1')}
+          onNavigate={navigateTo}
+        />
+      )}
+
       {currentPage === 'register-3' && (
         <RegisterStep3 
           onComplete={() => {
+            const role = localStorage.getItem('tempRole') || 'startup';
+            localStorage.setItem('userRole', role);
+            localStorage.removeItem('tempRole');
             alert("Startup Registration Completed & Verified under MeitY Sandbox!");
-            navigateTo('landing');
+            navigateTo('startup-profile');
           }}
           onBack={() => navigateTo('register-2')}
         />
       )}
 
-      {/* PROPOSAL SUBMISSION STEPS */}
+      {/* PROPOSAL SUBMISSION PIPELINE (5 STEPS) */}
       {currentPage === 'proposal-1' && (
         <SubmitProposalStep1 
           onNext={() => navigateTo('proposal-2')}
@@ -158,28 +229,22 @@ export default function App() {
       )}
 
       {currentPage === 'proposal-4' && (
-        <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50">
-          <h2 className="text-xl font-bold mb-2 text-gray-900">Step 4: Commercials & Milestone Budgeting</h2>
-          <p className="text-xs text-gray-600 mb-6">This step is currently under construction.</p>
-          <div className="flex gap-4">
-            <button onClick={() => navigateTo('proposal-3')} className="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold cursor-pointer">Back to Step 3</button>
-            <button onClick={() => navigateTo('proposal-5')} className="px-4 py-2 bg-[#0b2447] text-white rounded-xl text-xs font-bold cursor-pointer">Continue to Step 5</button>
-          </div>
-        </div>
+        <SubmitProposalStep4 
+          onNext={() => navigateTo('proposal-5')}
+          onBack={() => navigateTo('proposal-3')}
+          onNavigate={navigateTo}
+        />
       )}
 
       {currentPage === 'proposal-5' && (
-        <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50">
-          <h2 className="text-xl font-bold mb-2 text-gray-900">Step 5: Review & Submit</h2>
-          <p className="text-xs text-gray-600 mb-6">Final proposal review dossier and escrow submission.</p>
-          <div className="flex gap-4">
-            <button onClick={() => navigateTo('proposal-4')} className="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold cursor-pointer">Back to Step 4</button>
-            <button onClick={() => {
-              alert("Proposal submitted successfully into Blind Evaluation Escrow queue!");
-              navigateTo('dashboard');
-            }} className="px-4 py-2 bg-green-700 text-white rounded-xl text-xs font-bold cursor-pointer">Submit Proposal</button>
-          </div>
-        </div>
+        <SubmitProposalStep5 
+          onSubmit={() => {
+            alert("Proposal submitted successfully into Blind Evaluation Escrow queue!");
+            navigateTo('dashboard');
+          }}
+          onBack={() => navigateTo('proposal-4')}
+          onNavigate={navigateTo}
+        />
       )}
     </div>
   );

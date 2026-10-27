@@ -48,9 +48,9 @@ export default function SubmitProposalStep1({ onNext, onNavigate }) {
             <button
               type="button"
               onClick={() => onNavigate && onNavigate('startup-profile')}
-              className="inline-flex items-center px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl text-xs font-bold hover:bg-orange-100 transition-all cursor-pointer"
+              className="inline-flex items-center px-4 py-2 bg-[#0b2447]/10 text-[#0b2447] border border-[#0b2447]/20 rounded-xl text-xs font-bold hover:bg-[#0b2447]/20 transition-all cursor-pointer"
             >
-              👤 My Profile
+              📊 Dashboard
             </button>
             <button
               type="button"

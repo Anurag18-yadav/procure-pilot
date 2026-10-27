@@ -28,9 +28,9 @@ const GovRegisterStep2 = ({ onNext, onBack }) => {
       return;
     }
 
-    // Save government credentials to localStorage
+    // Save government credentials temporarily to localStorage (without assigning active session yet)
     localStorage.setItem('govRegisterData', JSON.stringify(govData));
-    localStorage.setItem('userRole', 'government');
+    // NOTE: userRole assignment is now securely handled upon completion in App.jsx
 
     if (onNext) {
       onNext();
@@ -44,7 +44,7 @@ const GovRegisterStep2 = ({ onNext, onBack }) => {
           GOVERNMENT OFFICIAL SANDBOX REGISTRATION
         </span>
         <h2 className="mt-3 text-3xl font-extrabold text-gray-900">
-          Department & Official Verification
+          Department &amp; Official Verification
         </h2>
         <p className="mt-2 text-sm text-gray-600">
           Verify your official credentials under GFR 2017 public procurement guidelines.

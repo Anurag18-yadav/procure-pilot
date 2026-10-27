@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 export default function Navbar({ onNavigate }) {
   const [showResourcesModal, setShowResourcesModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
-  // Check if user is logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('regStep1') || localStorage.getItem('userRole') || localStorage.getItem('loggedInUser');
-    if (storedUser) {
+    const role = localStorage.getItem('userRole');
+    if (role) {
       setUser(true);
+      setUserRole(role);
+    } else {
+      setUser(false);
+      setUserRole(null);
     }
   }, []);
 
@@ -27,10 +31,36 @@ export default function Navbar({ onNavigate }) {
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
+    setUserRole(null);
     if (onNavigate) {
       onNavigate('landing');
     } else {
       window.location.href = '#/landing';
+    }
+  };
+
+  const handleGovPortalClick = () => {
+    const role = localStorage.getItem('userRole');
+    if (role !== 'government') {
+      alert("Access Denied: Government Portal is strictly restricted to verified Government officials.");
+      return;
+    }
+    if (onNavigate) {
+      onNavigate('government-portal');
+    } else {
+      window.location.href = '#/government-portal';
+    }
+  };
+
+  const handleDashboardClick = () => {
+    let targetPage = 'startup-profile';
+    if (userRole === 'government') targetPage = 'government-portal';
+    else if (userRole === 'expert') targetPage = 'dashboard';
+
+    if (onNavigate) {
+      onNavigate(targetPage);
+    } else {
+      window.location.href = `#/${targetPage}`;
     }
   };
 
@@ -61,13 +91,18 @@ export default function Navbar({ onNavigate }) {
             </div>
           </div>
 
-          {/* Center Navigation Links */}
+          {/* Center Navigation Links (Restored For Government with security check) */}
           <nav className="hidden lg:flex items-center space-x-8 text-sm font-medium text-[#333b4c]">
             <button type="button" onClick={handleHowItWorksClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">How it Works</button>
             <button type="button" onClick={() => onNavigate ? onNavigate('challenges') : (window.location.href = '#/challenges')} className="hover:text-[#0b2447] transition-colors cursor-pointer">Challenges</button>
-            <button type="button" onClick={() => onNavigate ? onNavigate('government-portal') : (window.location.href = '#/government-portal')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Government</button>
+            
+            {/* For Government is now visible to all, but guarded on click */}
+            <button type="button" onClick={handleGovPortalClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Government</button>
+
             <button type="button" onClick={() => onNavigate ? onNavigate('startup-profile') : (window.location.href = '#/startup-profile')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Startups</button>
+            
             <button type="button" onClick={() => onNavigate ? onNavigate('dashboard') : (window.location.href = '#/dashboard')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Experts</button>
+
             <button type="button" onClick={() => setShowResourcesModal(true)} className="hover:text-[#0b2447] transition-colors cursor-pointer">Resources</button>
           </nav>
 
@@ -78,17 +113,13 @@ export default function Navbar({ onNavigate }) {
             </button>
             
             {user ? (
-              /* If Logged In: Show Profile & Logout */
               <div className="flex items-center space-x-3">
                 <button 
                   type="button" 
-                  onClick={() => onNavigate ? onNavigate('startup-profile') : (window.location.href = '#/startup-profile')}
-                  className="flex items-center space-x-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer"
+                  onClick={handleDashboardClick}
+                  className="flex items-center space-x-2 px-3.5 py-2 bg-[#0b2447]/10 border border-[#0b2447]/20 rounded-xl hover:bg-[#0b2447]/20 transition-all cursor-pointer"
                 >
-                  <span className="w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                    👤
-                  </span>
-                  <span className="text-xs font-bold text-gray-800">My Profile</span>
+                  <span className="text-xs font-bold text-[#0b2447]">📊 Dashboard</span>
                 </button>
 
                 <button 
@@ -100,7 +131,6 @@ export default function Navbar({ onNavigate }) {
                 </button>
               </div>
             ) : (
-              /* If Not Logged In: Show Login & Register (pointing to Role Selection) */
               <>
                 <button 
                   type="button" 
