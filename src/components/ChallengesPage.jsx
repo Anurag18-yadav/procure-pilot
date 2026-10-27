@@ -58,20 +58,6 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
   return (
     <div className="w-full min-h-screen bg-[#f8f9fb] text-[#191c1e] font-sans antialiased flex flex-col">
       
-      {/* GOVT STRIP */}
-      <div className="bg-[#0b2447] text-white px-6 py-1.5 flex items-center justify-between text-xs">
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <span className="font-bold text-[#ffe08e] border border-[#cea62c]/40 px-1.5 py-0.5 rounded text-[11px]">GOI • GFR 2017</span>
-            <span className="text-[#c4c6cf]">|</span>
-            <span className="text-[#e1e2e4]">Active Government Challenge Portal</span>
-          </div>
-          <div>
-            <button onClick={() => onNavigate('landing')} className="text-[#ffe08e] hover:underline cursor-pointer">Back to Home</button>
-          </div>
-        </div>
-      </div>
-
       {/* NAVBAR */}
       <header className="bg-white border-b border-[#c4c6cf] sticky top-0 z-50">
         <div className="w-full max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
@@ -91,10 +77,10 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
           </div>
           <div>
             <button 
-              onClick={() => onNavigate('proposal-1')}
-              className="px-5 py-2.5 bg-[#0b2447] text-white text-xs font-bold rounded-xl hover:bg-[#00172e] cursor-pointer shadow-xs"
+              onClick={() => onNavigate('landing')}
+              className="text-xs font-semibold text-gray-600 hover:text-[#0b2447] cursor-pointer"
             >
-              Submit Proposal
+              Back to Home
             </button>
           </div>
         </div>
@@ -174,7 +160,11 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-xs text-gray-500">{item.applicants} Startups Applied</span>
                   <button 
-                    onClick={onSubmitProposal}
+                    type="button"
+                    onClick={() => {
+                      const proposalUrl = `${window.location.origin}${window.location.pathname}#proposal-1`;
+                      window.open(proposalUrl, '_blank');
+                    }}
                     className="px-4 py-2 bg-[#0b2447] text-white text-xs font-bold rounded-xl hover:bg-[#00172e] cursor-pointer flex items-center gap-1"
                   >
                     Apply Now <span className="material-symbols-outlined text-[14px]">arrow_forward</span>

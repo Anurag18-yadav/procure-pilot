@@ -3,25 +3,24 @@ import LandingPage from './components/LandingPage';
 import DomainExpertDashboard from './components/DomainExpertDashboard';
 import SignInPage from './components/SignInPage';
 import ChallengesPage from './components/ChallengesPage';
-import RegisterRoleSelect from './components/RegisterRoleSelect'; // Role Selection Component
-import RegisterStep1 from './components/RegisterStep1'; // Basic Info & Credentials
-import RegisterStep2 from './components/RegisterStep2'; // Sector Selection Cards
-import RegisterStep3 from './components/RegisterStep3'; // DPIIT Verification & PP-ID
-import GovRegisterStep2 from './components/GovRegisterStep2'; // Government Department Form
+import RegisterRoleSelect from './components/RegisterRoleSelect';
+import RegisterStep1 from './components/RegisterStep1';
+import RegisterStep2 from './components/RegisterStep2';
+import RegisterStep3 from './components/RegisterStep3';
+import GovRegisterStep2 from './components/GovRegisterStep2';
 import SubmitProposalStep1 from './components/SubmitProposalStep1';
 import SubmitProposalStep2 from './components/SubmitProposalStep2';
+import SubmitProposalStep3 from './components/SubmitProposalStep3';
 import GovernmentPortal from './components/GovernmentPortal';
 import StartupProfilePage from './components/StartupProfilePage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   
-  // FIX: localStorage se current role uthao taki refresh hone par bhi role lost na ho
   const [selectedRole, setSelectedRole] = useState(() => {
     return localStorage.getItem('userRole') || 'startup';
   });
 
-  // Simple Hash-based routing sync so browser back/forward buttons work smoothly
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -71,7 +70,6 @@ export default function App() {
         <StartupProfilePage onNavigate={navigateTo} />
       )}
 
-      {/* SIGN IN PAGE ROUTING WITH DYNAMIC ROLE REDIRECT */}
       {currentPage === 'signin' && (
         <SignInPage 
           onSignInSuccess={(targetPage) => {
@@ -89,7 +87,6 @@ export default function App() {
         />
       )}
 
-      {/* STEP 1: Role Selection Page (Startup vs Government) */}
       {currentPage === 'register-role' && (
         <RegisterRoleSelect 
           onRoleSelect={(role) => {
@@ -101,17 +98,13 @@ export default function App() {
         />
       )}
 
-      {/* STEP 2: Basic Credentials & Form (RegisterStep1) */}
       {currentPage === 'register-1' && (
         <RegisterStep1 
-          onNext={() => {
-            navigateTo('register-2');
-          }}
+          onNext={() => navigateTo('register-2')}
           onNavigate={navigateTo}
         />
       )}
 
-      {/* STEP 3: Conditional Branching based on Role (Government vs Startup Sector Cards) */}
       {currentPage === 'register-2' && (
         selectedRole === 'government' ? (
           <GovRegisterStep2 
@@ -123,17 +116,13 @@ export default function App() {
           />
         ) : (
           <RegisterStep2 
-            onComplete={() => {
-              // Startup sector select hone ke baad DPIIT verification step par bhejo
-              navigateTo('register-3');
-            }}
+            onComplete={() => navigateTo('register-3')}
             onBack={() => navigateTo('register-1')}
             onNavigate={navigateTo}
           />
         )
       )}
 
-      {/* STEP 4: DPIIT Verification & Unique PP-ID Generation (Startup Only) */}
       {currentPage === 'register-3' && (
         <RegisterStep3 
           onComplete={() => {
@@ -144,6 +133,7 @@ export default function App() {
         />
       )}
 
+      {/* PROPOSAL SUBMISSION STEPS */}
       {currentPage === 'proposal-1' && (
         <SubmitProposalStep1 
           onNext={() => navigateTo('proposal-2')}
@@ -153,12 +143,43 @@ export default function App() {
 
       {currentPage === 'proposal-2' && (
         <SubmitProposalStep2 
-          onSubmit={() => {
-            alert("Proposal submitted successfully into Blind Evaluation Escrow queue!");
-            navigateTo('dashboard');
-          }}
+          onNext={() => navigateTo('proposal-3')}
+          onBack={() => navigateTo('proposal-1')}
           onNavigate={navigateTo}
         />
+      )}
+
+      {currentPage === 'proposal-3' && (
+        <SubmitProposalStep3 
+          onNext={() => navigateTo('proposal-4')}
+          onBack={() => navigateTo('proposal-2')}
+          onNavigate={navigateTo}
+        />
+      )}
+
+      {currentPage === 'proposal-4' && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50">
+          <h2 className="text-xl font-bold mb-2 text-gray-900">Step 4: Commercials & Milestone Budgeting</h2>
+          <p className="text-xs text-gray-600 mb-6">This step is currently under construction.</p>
+          <div className="flex gap-4">
+            <button onClick={() => navigateTo('proposal-3')} className="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold cursor-pointer">Back to Step 3</button>
+            <button onClick={() => navigateTo('proposal-5')} className="px-4 py-2 bg-[#0b2447] text-white rounded-xl text-xs font-bold cursor-pointer">Continue to Step 5</button>
+          </div>
+        </div>
+      )}
+
+      {currentPage === 'proposal-5' && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50">
+          <h2 className="text-xl font-bold mb-2 text-gray-900">Step 5: Review & Submit</h2>
+          <p className="text-xs text-gray-600 mb-6">Final proposal review dossier and escrow submission.</p>
+          <div className="flex gap-4">
+            <button onClick={() => navigateTo('proposal-4')} className="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold cursor-pointer">Back to Step 4</button>
+            <button onClick={() => {
+              alert("Proposal submitted successfully into Blind Evaluation Escrow queue!");
+              navigateTo('dashboard');
+            }} className="px-4 py-2 bg-green-700 text-white rounded-xl text-xs font-bold cursor-pointer">Submit Proposal</button>
+          </div>
+        </div>
       )}
     </div>
   );

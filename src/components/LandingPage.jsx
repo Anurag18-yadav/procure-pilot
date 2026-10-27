@@ -29,14 +29,6 @@ export default function LandingPage({ onNavigate, onLogin, onRegister, onExplore
           >
             Explore Challenges <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
-          
-          <button 
-            type="button"
-            onClick={onRegister}
-            className="w-full sm:w-auto px-7 py-3.5 bg-white border border-[#c4c6cf] text-[#000f27] font-bold text-sm rounded-xl hover:bg-[#f2f4f6] transition-colors cursor-pointer"
-          >
-            Post a Challenge / Register Startup
-          </button>
         </div>
       </section>
 
