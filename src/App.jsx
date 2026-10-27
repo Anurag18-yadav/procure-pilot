@@ -3,8 +3,11 @@ import LandingPage from './components/LandingPage';
 import DomainExpertDashboard from './components/DomainExpertDashboard';
 import SignInPage from './components/SignInPage';
 import ChallengesPage from './components/ChallengesPage';
-import RegisterStep1 from './components/RegisterStep1';
-import RegisterStep2 from './components/RegisterStep2';
+import RegisterRoleSelect from './components/RegisterRoleSelect'; // Role Selection Component
+import RegisterStep1 from './components/RegisterStep1'; // Basic Info & Credentials
+import RegisterStep2 from './components/RegisterStep2'; // Sector Selection Cards
+import RegisterStep3 from './components/RegisterStep3'; // DPIIT Verification & PP-ID
+import GovRegisterStep2 from './components/GovRegisterStep2';
 import SubmitProposalStep1 from './components/SubmitProposalStep1';
 import SubmitProposalStep2 from './components/SubmitProposalStep2';
 import GovernmentPortal from './components/GovernmentPortal';
@@ -12,6 +15,7 @@ import StartupProfilePage from './components/StartupProfilePage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
+  const [selectedRole, setSelectedRole] = useState('startup');
 
   // Simple Hash-based routing sync so browser back/forward buttons work smoothly
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function App() {
         <LandingPage 
           onNavigate={navigateTo} 
           onExploreChallenges={() => navigateTo('challenges')}
-          onRegister={() => navigateTo('register-1')}
+          onRegister={() => navigateTo('register-role')}
         />
       )}
 
@@ -66,7 +70,7 @@ export default function App() {
       {currentPage === 'signin' && (
         <SignInPage 
           onSignInSuccess={() => navigateTo('dashboard')}
-          onRegisterClick={() => navigateTo('register-1')}
+          onRegisterClick={() => navigateTo('register-role')}
           onNavigate={navigateTo}
         />
       )}
@@ -78,20 +82,58 @@ export default function App() {
         />
       )}
 
-      {currentPage === 'register-1' && (
-        <RegisterStep1 
-          onNext={() => navigateTo('register-2')}
+      {/* STEP 1: Role Selection Page (Startup vs Government) */}
+      {currentPage === 'register-role' && (
+        <RegisterRoleSelect 
+          onRoleSelect={(role) => {
+            setSelectedRole(role);
+            localStorage.setItem('userRole', role);
+            navigateTo('register-1');
+          }}
           onNavigate={navigateTo}
         />
       )}
 
+      {/* STEP 2: Basic Credentials & Form (RegisterStep1) */}
+      {currentPage === 'register-1' && (
+        <RegisterStep1 
+          onNext={() => {
+            navigateTo('register-2');
+          }}
+          onNavigate={navigateTo}
+        />
+      )}
+
+      {/* STEP 3: Sector Selection Cards (RegisterStep2) */}
       {currentPage === 'register-2' && (
-        <RegisterStep2 
+        selectedRole === 'government' ? (
+          <GovRegisterStep2 
+            onNext={() => {
+              alert("Government Department Sandbox Registration Completed!");
+              navigateTo('government-portal');
+            }}
+            onBack={() => navigateTo('register-1')}
+          />
+        ) : (
+          <RegisterStep2 
+            onComplete={() => {
+              // Sector select hone ke baad DPIIT verification step par bhejo
+              navigateTo('register-3');
+            }}
+            onBack={() => navigateTo('register-1')}
+            onNavigate={navigateTo}
+          />
+        )
+      )}
+
+      {/* STEP 4: DPIIT Verification & Unique PP-ID Generation (RegisterStep3) */}
+      {currentPage === 'register-3' && (
+        <RegisterStep3 
           onComplete={() => {
             alert("Startup Registration Completed & Verified under MeitY Sandbox!");
             navigateTo('landing');
           }}
-          onNavigate={navigateTo}
+          onBack={() => navigateTo('register-2')}
         />
       )}
 

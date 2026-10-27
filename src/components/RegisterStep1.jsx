@@ -1,123 +1,166 @@
 import React, { useState } from 'react';
-import Navbar from './Navbar';
 
-export default function RegisterStep1({ onNext, onLoginClick, onNavigate }) {
-  const [selectedRole, setSelectedRole] = useState('startup');
+const RegisterStep1 = ({ onNext }) => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    startupName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
 
-  const handleContinue = () => {
-    // You can pass the selectedRole if needed, currently proceeding to Step 2
-    if (onNext) {
-      onNext(selectedRole);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validations
+    if (!formData.fullName || !formData.startupName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+      setError('Kripya sabhi fields bharein!');
+      return;
+    }
+    if (formData.phone.length !== 10) {
+      setError('Phone number 10 digits ka hona chahiye.');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords match nahi kar rahe hain!');
+      return;
+    }
+
+    // Save data to localStorage
+    localStorage.setItem('regStep1', JSON.stringify(formData));
+    
+    // Proceed to next step smoothly
+    if (typeof onNext === 'function') {
+      onNext();
+    } else {
+      window.location.hash = 'register-2';
     }
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#f8f9fb] flex flex-col m-0 p-0 overflow-x-hidden">
-      <Navbar onNavigate={onNavigate} />
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          ProcurePilot Registration
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Step 1: Basic Information & Credentials
+        </p>
+      </div>
 
-      <div className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left Sidebar Info */}
-        <div className="lg:col-span-5 bg-[#000f27] text-white p-8 rounded-2xl shadow-sm space-y-6">
-          <div className="inline-block px-3 py-1 bg-white/10 text-amber-300 text-[11px] font-bold rounded uppercase tracking-wider">
-            NATIONAL PUBLIC SANDBOX PROGRAM
-          </div>
-          <h1 className="text-3xl font-extrabold leading-tight">
-            Join India's Public Innovation Ecosystem
-          </h1>
-          <p className="text-xs text-gray-300 leading-relaxed">
-            Onboard to the national procurement pilot infrastructure. Secure fast-tracked institutional testing, direct statutory validation, and fair opportunity access under central vigilance guidelines.
-          </p>
-
-          <div className="space-y-4 pt-4 border-t border-gray-800 text-xs">
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-amber-400">verified</span>
-              <div>
-                <strong className="block text-white">DPIIT Fast-Track</strong>
-                <span className="text-gray-400">Automated startup eligibility and certificate validation</span>
-              </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-orange-100">
+          {error && (
+            <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm">
+              {error}
             </div>
-            <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-amber-400">domain</span>
-              <div>
-                <strong className="block text-white">Department Sandboxes</strong>
-                <span className="text-gray-400">Post verified operational problem statements in 15 minutes</span>
-              </div>
-            </div>
-          </div>
-        </div>
+          )}
 
-        {/* Right Role Selection Form */}
-        <div className="lg:col-span-7 bg-white border border-[#c4c6cf] rounded-2xl p-8 shadow-xs">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+          <form className="space-y-6" onSubmit={handleNext}>
             <div>
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Step 1 of 3</span>
-              <h2 className="text-xl font-bold text-[#000f27]">Select your operational role</h2>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            
-            {/* Startup Role Card */}
-            <div 
-              onClick={() => setSelectedRole('startup')}
-              className={`p-5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${selectedRole === 'startup' ? 'border-[#0b2447] bg-blue-50/30' : 'border-[#c4c6cf] hover:border-gray-400'}`}
-            >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="material-symbols-outlined text-2xl text-[#0b2447]">rocket_launch</span>
-                  <input type="radio" checked={selectedRole === 'startup'} readOnly className="accent-[#0b2447]" />
-                </div>
-                <h3 className="font-bold text-[#000f27] text-sm">Startup / Innovator</h3>
-                <p className="text-[11px] text-[#44474e] mt-1">DPIIT-recognised startups deploying deep-tech prototypes and pilot deployments.</p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-500">
-                <span>Pre-seed to Series B</span>
-                <span className="text-green-700 bg-green-50 px-2 py-0.5 rounded">Fast-track</span>
-              </div>
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Anurag Yadav"
+              />
             </div>
 
-            {/* Government Department Role Card */}
-            <div 
-              onClick={() => setSelectedRole('government')}
-              className={`p-5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${selectedRole === 'government' ? 'border-[#0b2447] bg-blue-50/30' : 'border-[#c4c6cf] hover:border-gray-400'}`}
-            >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="material-symbols-outlined text-2xl text-[#0b2447]">account_balance</span>
-                  <input type="radio" checked={selectedRole === 'government'} readOnly className="accent-[#0b2447]" />
-                </div>
-                <h3 className="font-bold text-[#000f27] text-sm">Government Department</h3>
-                <p className="text-[11px] text-[#44474e] mt-1">Central ministries, state departments, and municipal corporations posting problem briefs.</p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-500">
-                <span>RFP &amp; Sandbox Issuer</span>
-                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded">GFR 149</span>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Startup Name</label>
+              <input
+                type="text"
+                name="startupName"
+                value={formData.startupName}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="RoadTech Labs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="startup@roadtechlabs.in"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <div className="mt-1 flex rounded-md shadow-sm">
+                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  name="phone"
+                  maxLength="10"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  className="flex-1 block w-full border border-gray-300 rounded-none rounded-r-md p-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="9818828974"
+                />
               </div>
             </div>
 
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="••••••••"
+              />
+            </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-            <button 
-              type="button"
-              onClick={onLoginClick}
-              className="text-xs font-bold text-[#0b2447] hover:underline"
-            >
-              Already registered? Sign In
-            </button>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="px-6 py-3 bg-[#0b2447] text-white text-xs font-bold rounded-lg hover:bg-[#00172e] transition-colors shadow-xs"
-            >
-              Continue as {selectedRole === 'startup' ? 'Startup' : 'Government'} &rarr;
-            </button>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="••••••••"
+              />
+            </div>
 
+            <div>
+              <button
+                type="submit"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all cursor-pointer"
+              >
+                Proceed to Next Step &rarr;
+              </button>
+            </div>
+          </form>
         </div>
-
       </div>
     </div>
   );
-}
+};
+
+export default RegisterStep1;
