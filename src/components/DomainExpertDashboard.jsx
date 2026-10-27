@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function DomainExpertDashboard({ onPreviousProposal, onNextProposal }) {
+export default function DomainExpertDashboard({ onPreviousProposal, onNextProposal, onNavigate }) {
   const [scores, setScores] = useState({
     technicalApproach: 8,
     feasibility: 8,
@@ -103,6 +103,14 @@ startxref
     alert(`Final Evaluation Submitted with Aggregate Score: ${aggregateScore}/10`);
   };
 
+  const handleBackToHome = () => {
+    if (onNavigate) {
+      onNavigate('landing');
+    } else {
+      window.location.hash = 'landing';
+    }
+  };
+
   return (
     <div className="bg-[#f8f9fb] text-[#191c1e] font-sans antialiased min-h-screen flex flex-col selection:bg-[#cadaff] selection:text-[#4f5f7f]">
       {/* GOVT OF INDIA INSTITUTIONAL STRIP */}
@@ -129,7 +137,7 @@ startxref
       {/* TOP NAVBAR */}
       <header className="bg-white border-b border-[#c4c6cf] sticky top-0 z-50">
         <div className="w-full max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={handleBackToHome}>
             {/* Custom Logo Icon */}
             <div className="w-10 h-10 rounded-full bg-[#0b2447] border border-[#d4af37]/60 flex items-center justify-center text-white shadow-xs" title="ProcurePilot Logo">
               <svg className="w-5 h-5 text-white transform rotate-45 translate-x-[-1px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -154,18 +162,25 @@ startxref
 
           <nav className="hidden md:flex items-center space-x-8 text-sm">
             <a className="text-[#44474e] hover:text-[#000f27] transition-colors px-2 py-1 rounded" href="#challenges">Challenges</a>
-            <a className="text-[#44474e] hover:text-[#000f27] transition-colors px-2 py-1 rounded" href="#workflow">Workflow</a>
             <a className="border-b-2 border-[#000f27] text-[#000f27] font-semibold pb-1 flex items-center gap-1.5" href="#evaluations">
               <span className="material-symbols-outlined text-[18px]">gavel</span>
               Evaluations
             </a>
-            <a className="text-[#44474e] hover:text-[#000f27] transition-colors px-2 py-1 rounded" href="#framework">Institutional Framework</a>
           </nav>
-          <div className="flex items-center space-x-3">
+
+          <div className="flex items-center space-x-4">
             <div className="text-right hidden lg:block mr-2">
               <span className="text-[11px] font-semibold text-[#44474e] block">Jury Token</span>
               <span className="font-mono text-[13px] font-bold text-[#000f27]">JURY-EVAL-IITD-04</span>
             </div>
+            <button
+              type="button"
+              onClick={handleBackToHome}
+              className="px-4 py-2 bg-[#0b2447] text-white text-xs font-bold rounded-lg hover:bg-[#00172e] transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">home</span>
+              Back to Home
+            </button>
           </div>
         </div>
       </header>
