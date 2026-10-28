@@ -30,24 +30,8 @@ export default function DomainExpertAIPreScreen({ onProceedToHumanReview, onNavi
           <span className="text-[#0b2447]">Expert Review Flow</span>
         </div>
 
-        {/* Right Nav / Proposal Counter */}
-        <div className="flex items-center space-x-6">
-          <div className="text-right">
-            <div className="text-xs font-bold text-[#0b2447]">Proposal 3 of 8</div>
-            <div className="text-[10px] text-gray-400 tracking-wider uppercase">Active Queue</div>
-          </div>
-          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-            <button className="px-3 py-1.5 hover:bg-gray-200 text-gray-600 transition-colors font-bold">&lt;</button>
-            <div className="w-[1px] bg-gray-200"></div>
-            <button className="px-3 py-1.5 hover:bg-gray-200 text-gray-600 transition-colors font-bold">&gt;</button>
-          </div>
-          <button 
-            onClick={() => alert("Abstained from reviewing this proposal.")}
-            className="text-xs font-semibold text-red-600 hover:text-red-800 transition-colors cursor-pointer px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50"
-          >
-            Skip / Abstain
-          </button>
-        </div>
+        {/* Empty div to balance header spacing */}
+        <div></div>
       </header>
 
       {/* Main Content Container */}

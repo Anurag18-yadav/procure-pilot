@@ -42,7 +42,7 @@ export default function DomainExpertHumanReview({ onNavigate }) {
     setNotes(prev => ({ ...prev, [criteria]: value }));
   };
 
-  const handleSubmitEvaluation = (actionType) => {
+  const handleSubmitEvaluation = async (actionType) => {
     if (!conflictChecked) {
       alert("Kripya Conflict of Interest Declaration checkbox ko tick karein!");
       return;
@@ -51,8 +51,34 @@ export default function DomainExpertHumanReview({ onNavigate }) {
       alert("Statutory Justification & Evaluation Summary kam se kam 100 characters ki honi chahiye!");
       return;
     }
-    alert(`Success: Proposal evaluated successfully with Aggregate Score ${aggregateScore}/10. Action locked as [${actionType.toUpperCase()}] under GFR 149(v) compliance!`);
-    onNavigate('dashboard');
+
+    const payload = {
+      proposalId: "PRP-2026-9557",
+      scores,
+      aggregateScore: parseFloat(aggregateScore),
+      notes,
+      justification,
+      decision: actionType
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/api/expert/evaluations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Success: ${data.message} (Aggregate Score: ${aggregateScore}/10)`);
+        onNavigate('dashboard');
+      } else {
+        alert(`Error: ${data.error || 'Failed to submit evaluation'}`);
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      alert("Backend server se connect nahi ho paya. Kripya check karein ki server port 5000 par running hai!");
+    }
   };
 
   return (

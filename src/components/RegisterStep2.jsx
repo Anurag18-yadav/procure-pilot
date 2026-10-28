@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const RegisterStep2 = ({ onComplete, onBack }) => {
   const [selectedSector, setSelectedSector] = useState('');
   const [error, setError] = useState('');
 
-  // Aapke bataye gaye 5 specific fields
+  useEffect(() => {
+    const savedSector = localStorage.getItem('startupSector');
+    if (savedSector) {
+      setSelectedSector(savedSector);
+    }
+  }, []);
+
+  // 5 specific industry fields
   const sectors = [
     { id: 'tech', title: 'Tech / IT', icon: '💻', desc: 'SaaS, AI/ML, software, and digital public goods.' },
     { id: 'medtech', title: 'MedTech / Healthcare', icon: '🩺', desc: 'Medical devices, health tech, and diagnostics.' },
@@ -18,10 +25,11 @@ const RegisterStep2 = ({ onComplete, onBack }) => {
       setError('Kripya apna sector/field select karein!');
       return;
     }
-    // LocalStorage me save kar lo
+    
+    // Save selection to localStorage
     localStorage.setItem('startupSector', selectedSector);
     
-    if (onComplete) {
+    if (typeof onComplete === 'function') {
       onComplete();
     } else {
       window.location.hash = 'register-3';
@@ -32,7 +40,7 @@ const RegisterStep2 = ({ onComplete, onBack }) => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl text-center">
         <span className="text-xs font-bold tracking-wider text-orange-600 uppercase bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-          STEP 2: DOMAIN & SECTOR SELECTION
+          STEP 2: DOMAIN &amp; SECTOR SELECTION
         </span>
         <h2 className="mt-3 text-3xl font-extrabold text-gray-900">
           Select Your Startup Field
@@ -44,12 +52,12 @@ const RegisterStep2 = ({ onComplete, onBack }) => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-4xl px-4">
         {error && (
-          <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm rounded-md">
+          <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 text-red-700 text-sm rounded-md font-medium">
             {error}
           </div>
         )}
 
-        {/* BHASKAR Portal Style Grid Cards */}
+        {/* Sector Grid Cards */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {sectors.map((sec) => (
             <div

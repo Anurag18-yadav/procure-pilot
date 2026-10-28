@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import DomainExpertAIPreScreen from './components/DomainExpertAIPreScreen'; // Step 1: AI Pre-Screening Component
 import DomainExpertHumanReview from './components/DomainExpertHumanReview'; // Step 2: Human Expert Final Review Component
-import DomainExpertDashboard from './components/DomainExpertDashboard';       // Legacy Dashboard (if needed)
+import DomainExpertDashboard from './components/DomainExpertDashboard';      // Legacy Dashboard (if needed)
 import SignInPage from './components/SignInPage';
 import ChallengesPage from './components/ChallengesPage';
 import RegisterRoleSelect from './components/RegisterRoleSelect';
@@ -46,6 +46,12 @@ export default function App() {
           currentRole = 'expert';
         }
 
+        // Allow startup profile & proposal steps if hash starts with proposal- or is startup-profile
+        if ((hash === 'startup-profile' || hash.startsWith('proposal-')) && !currentRole) {
+          localStorage.setItem('userRole', 'startup');
+          currentRole = 'startup';
+        }
+
         if (hash === 'government-portal' && currentRole !== 'government') {
           alert("Access Denied: Government Portal is restricted to official government accounts.");
           window.location.hash = 'landing';
@@ -60,7 +66,7 @@ export default function App() {
           return;
         }
 
-        if (hash === 'startup-profile' && currentRole !== 'startup') {
+        if (hash === 'startup-profile' && currentRole !== 'startup' && currentRole !== 'government') {
           alert("Access Denied: Startup Profile is restricted to startup accounts.");
           window.location.hash = 'landing';
           setCurrentPage('landing');

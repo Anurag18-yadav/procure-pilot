@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const User = require('./models/User'); // User model import kiya
+const ExpertEvaluation = require('./models/ExpertEvaluation'); // Expert Evaluation model import kiya
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +53,18 @@ app.post('/api/register', async (req, res) => {
   } catch (err) {
     console.error("Registration Error:", err);
     res.status(500).json({ error: "Server error during registration." });
+  }
+});
+
+// Expert Evaluation API Route (Saves expert review scores & final decisions to MongoDB)
+app.post('/api/expert/evaluations', async (req, res) => {
+  try {
+    const evaluation = new ExpertEvaluation(req.body);
+    await evaluation.save();
+    res.status(201).json({ success: true, message: "Expert evaluation saved successfully in MongoDB cloud!" });
+  } catch (err) {
+    console.error("Expert Evaluation Save Error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
