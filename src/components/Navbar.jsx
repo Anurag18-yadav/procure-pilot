@@ -52,6 +52,13 @@ export default function Navbar({ onNavigate }) {
     }
   };
 
+  const handleExpertsClick = () => {
+    // Set expert role and open using query param to prevent blank screen in new tab
+    localStorage.setItem('userRole', 'expert');
+    const expertUrl = `${window.location.origin}${window.location.pathname}?role=expert`;
+    window.open(expertUrl, '_blank');
+  };
+
   const handleDashboardClick = () => {
     let targetPage = 'startup-profile';
     if (userRole === 'government') targetPage = 'government-portal';
@@ -91,17 +98,19 @@ export default function Navbar({ onNavigate }) {
             </div>
           </div>
 
-          {/* Center Navigation Links (Restored For Government with security check) */}
+          {/* Center Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-8 text-sm font-medium text-[#333b4c]">
             <button type="button" onClick={handleHowItWorksClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">How it Works</button>
             <button type="button" onClick={() => onNavigate ? onNavigate('challenges') : (window.location.href = '#/challenges')} className="hover:text-[#0b2447] transition-colors cursor-pointer">Challenges</button>
             
-            {/* For Government is now visible to all, but guarded on click */}
             <button type="button" onClick={handleGovPortalClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Government</button>
 
             <button type="button" onClick={() => onNavigate ? onNavigate('startup-profile') : (window.location.href = '#/startup-profile')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Startups</button>
             
-            <button type="button" onClick={() => onNavigate ? onNavigate('dashboard') : (window.location.href = '#/dashboard')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Experts</button>
+            {/* For Experts opens in a new tab via handleExpertsClick */}
+            <button type="button" onClick={handleExpertsClick} className="hover:text-[#0b2447] transition-colors cursor-pointer flex items-center gap-1">
+              For Experts <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            </button>
 
             <button type="button" onClick={() => setShowResourcesModal(true)} className="hover:text-[#0b2447] transition-colors cursor-pointer">Resources</button>
           </nav>

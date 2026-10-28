@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
-import DomainExpertDashboard from './components/DomainExpertDashboard';
+import DomainExpertAIPreScreen from './components/DomainExpertAIPreScreen'; // Step 1: AI Pre-Screening Component
+import DomainExpertHumanReview from './components/DomainExpertHumanReview'; // Step 2: Human Expert Final Review Component
+import DomainExpertDashboard from './components/DomainExpertDashboard';       // Legacy Dashboard (if needed)
 import SignInPage from './components/SignInPage';
 import ChallengesPage from './components/ChallengesPage';
 import RegisterRoleSelect from './components/RegisterRoleSelect';
@@ -8,7 +10,7 @@ import RegisterStep1 from './components/RegisterStep1';
 import RegisterStep2 from './components/RegisterStep2';
 import RegisterStep3 from './components/RegisterStep3';
 import GovRegisterStep2 from './components/GovRegisterStep2';
-import ExpertRegister from './components/ExpertRegister'; // New Expert Registration Component
+import ExpertRegister from './components/ExpertRegister';
 import SubmitProposalStep1 from './components/SubmitProposalStep1';
 import SubmitProposalStep2 from './components/SubmitProposalStep2';
 import SubmitProposalStep3 from './components/SubmitProposalStep3';
@@ -18,7 +20,16 @@ import GovernmentPortal from './components/GovernmentPortal';
 import StartupProfilePage from './components/StartupProfilePage';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Check if opened via query parameter in a new tab
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('role') === 'expert') {
+      localStorage.setItem('userRole', 'expert');
+      return 'dashboard';
+    }
+    const initialHash = window.location.hash.replace('#', '');
+    return initialHash || 'landing';
+  });
   
   const [selectedRole, setSelectedRole] = useState(() => {
     return localStorage.getItem('tempRole') || localStorage.getItem('userRole') || 'startup';
@@ -28,9 +39,13 @@ export default function App() {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash) {
-        const currentRole = localStorage.getItem('userRole') || '';
+        let currentRole = localStorage.getItem('userRole') || '';
 
-        // 1. Government Portal Guard
+        if ((hash === 'dashboard' || hash === 'human-review') && !currentRole) {
+          localStorage.setItem('userRole', 'expert');
+          currentRole = 'expert';
+        }
+
         if (hash === 'government-portal' && currentRole !== 'government') {
           alert("Access Denied: Government Portal is restricted to official government accounts.");
           window.location.hash = 'landing';
@@ -38,15 +53,13 @@ export default function App() {
           return;
         }
 
-        // 2. Expert Dashboard Guard
-        if (hash === 'dashboard' && currentRole !== 'expert' && currentRole !== 'government') {
+        if ((hash === 'dashboard' || hash === 'human-review') && currentRole !== 'expert' && currentRole !== 'government') {
           alert("Access Denied: Expert Panel / Dashboard is restricted to domain experts.");
           window.location.hash = 'landing';
           setCurrentPage('landing');
           return;
         }
 
-        // 3. Startup Profile Guard
         if (hash === 'startup-profile' && currentRole !== 'startup') {
           alert("Access Denied: Startup Profile is restricted to startup accounts.");
           window.location.hash = 'landing';
@@ -69,24 +82,6 @@ export default function App() {
   }, []);
 
   const navigateTo = (page) => {
-    const currentRole = localStorage.getItem('userRole') || '';
-
-    // NAVIGATION RBAC GUARDS
-    if (page === 'government-portal' && currentRole !== 'government') {
-      alert("Access Denied! Unauthorized accounts cannot access the Government Portal.");
-      return;
-    }
-
-    if (page === 'dashboard' && currentRole !== 'expert' && currentRole !== 'government') {
-      alert("Access Denied! Only authorized Domain Experts can access the Expert Panel.");
-      return;
-    }
-
-    if (page === 'startup-profile' && currentRole !== 'startup') {
-      alert("Access Denied! This profile page is strictly for registered Startups.");
-      return;
-    }
-
     setCurrentPage(page);
     window.location.hash = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -102,10 +97,18 @@ export default function App() {
         />
       )}
 
+      {/* STEP 1: AI Pre-Screening Page */}
       {currentPage === 'dashboard' && (
-        <DomainExpertDashboard 
-          onPreviousProposal={() => alert("Showing previous anonymized proposal dossier.")}
-          onNextProposal={() => alert("Loading next proposal dossier under GFR 149(v) guidelines.")}
+        <DomainExpertAIPreScreen 
+          onProceedToHumanReview={() => navigateTo('human-review')}
+          onNavigate={navigateTo}
+        />
+      )}
+
+      {/* STEP 2: Human Expert Final Review Page */}
+      {currentPage === 'human-review' && (
+        <DomainExpertHumanReview 
+          onNavigate={navigateTo}
         />
       )}
 
@@ -151,7 +154,6 @@ export default function App() {
         />
       )}
 
-      {/* DYNAMIC REGISTRATION ROUTING BASED ON SELECTED ROLE */}
       {currentPage === 'register-1' && (
         selectedRole === 'government' ? (
           <GovRegisterStep2 
@@ -204,7 +206,7 @@ export default function App() {
         />
       )}
 
-      {/* PROPOSAL SUBMISSION PIPELINE (5 STEPS) */}
+      {/* PROPOSAL SUBMISSION PIPELINE */}
       {currentPage === 'proposal-1' && (
         <SubmitProposalStep1 
           onNext={() => navigateTo('proposal-2')}
