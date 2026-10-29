@@ -11,6 +11,7 @@ export default function RegisterStep3({ onComplete, onBack, onNavigate }) {
   });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   // State for Custom Success Modal
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +29,7 @@ export default function RegisterStep3({ onComplete, onBack, onNavigate }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.dpiitId.trim() || !formData.cin.trim() || !formData.incorporationDate || !formData.fundingStage) {
       setError('Kripya sabhi anivarya (required) fields bharein.');
@@ -39,42 +40,51 @@ export default function RegisterStep3({ onComplete, onBack, onNavigate }) {
       return;
     }
 
-    // Get Step 1 data (jisme email aur password saved hai)
-    const step1Data = JSON.parse(localStorage.getItem('regStep1') || '{}');
-    const currentEmail = step1Data.email;
-
-    // Check existing registered startups list in database/localStorage
-    const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
-    
-    // Check if email already exists
-    const existingStartup = registeredStartups.find(s => s.email === currentEmail);
-    if (existingStartup) {
-      setError('Yeh email pehle se registered hai! Kripya Login page ka upyog karein.');
-      return;
-    }
-
     setError('');
+    setLoading(true);
 
-    // Generate unique ID for blind evaluation
-    const generatedId = 'BLIND-EVAL-' + Math.floor(100000 + Math.random() * 900000);
-    setUniqueId(generatedId);
+    try {
+      // Get Step 1 data (jisme fullName, startupName, email, phone, password, sector saved hai)
+      const step1Data = JSON.parse(localStorage.getItem('regStep1') || '{}');
 
-    // Combine all registration data
-    const completeStartupProfile = {
-      ...step1Data,
-      ...formData,
-      uniqueId: generatedId,
-      role: 'startup',
-      createdAt: new Date().toISOString()
-    };
+      // Combine all registration data for FastAPI backend payload
+      const completePayload = {
+        ...step1Data,
+        ...formData
+      };
 
-    // Save to registered database array
-    registeredStartups.push(completeStartupProfile);
-    localStorage.setItem('registeredStartups', JSON.stringify(registeredStartups));
-    localStorage.setItem('blindEvalId', generatedId);
+      // Call FastAPI Backend Register API
+      const response = await fetch('http://localhost:8000/api/register-startup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(completePayload),
+      });
 
-    // Show Custom Welcome Modal
-    setShowModal(true);
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle duplicate email or validation errors from FastAPI
+        throw new Error(data.detail || 'Registration failed on server.');
+      }
+
+      // Backend successfully registered and returned uniqueId
+      const generatedId = data.uniqueId;
+      setUniqueId(generatedId);
+      
+      // Store session data in localStorage for frontend reference
+      localStorage.setItem('blindEvalId', generatedId);
+      localStorage.setItem('startupUniqueId', generatedId);
+
+      // Show Custom Welcome Modal
+      setShowModal(true);
+
+    } catch (err) {
+      setError(err.message || 'Backend server se connect nahi ho pa raha hai!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleModalClose = () => {
@@ -107,7 +117,7 @@ export default function RegisterStep3({ onComplete, onBack, onNavigate }) {
                 Almost there
               </h1>
               <p className="mt-3 text-sm text-gray-300 leading-relaxed">
-                Verify your startup credentials to unlock blind public sector evaluation.
+                Verify your startup credentials to unlock blind public sector evaluation via MongoDB.
               </p>
             </div>
 
@@ -281,9 +291,10 @@ export default function RegisterStep3({ onComplete, onBack, onNavigate }) {
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-2.5 bg-amber-500 text-gray-900 rounded-xl text-xs font-bold hover:bg-amber-400 shadow-md cursor-pointer transition-all"
+                  disabled={loading}
+                  className="px-8 py-2.5 bg-amber-500 text-gray-900 rounded-xl text-xs font-bold hover:bg-amber-400 shadow-md cursor-pointer transition-all disabled:opacity-50"
                 >
-                  Complete Registration &rarr;
+                  {loading ? 'Registering...' : 'Complete Registration \u2192'}
                 </button>
               </div>
             </form>

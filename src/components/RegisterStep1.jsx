@@ -19,6 +19,7 @@ const RegisterStep1 = ({ onNext }) => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +34,7 @@ const RegisterStep1 = ({ onNext }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleNext = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -62,17 +63,36 @@ const RegisterStep1 = ({ onNext }) => {
       return;
     }
 
-    // DUPLICATE EMAIL DATABASE CHECK
-    const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
-    const enteredEmail = formData.email.trim().toLowerCase();
-    const existingUser = registeredStartups.find(s => s.email && s.email.toLowerCase() === enteredEmail);
+    setLoading(true);
 
-    if (existingUser) {
-      setError('This email is already registered! Please use the Sign In page or login with your credentials.');
+    try {
+      // Check duplicate email against FastAPI /api/check-email before proceeding
+      const response = await fetch('http://localhost:8000/api/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formData.email.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || 'This email is already registered!');
+        setLoading(false);
+        return; // Yahin rok dega, aage nahi jaane dega!
+      }
+
+    } catch (err) {
+      console.error("Backend pre-check connection error:", err);
+      setError('Backend server se connect nahi ho pa raha hai!');
+      setLoading(false);
       return;
+    } finally {
+      setLoading(false);
     }
 
-    // Save data to localStorage
+    // Save data to localStorage for multi-step form continuity
     localStorage.setItem('regStep1', JSON.stringify(formData));
     
     // Strict Hash Navigation to Step 2
@@ -196,11 +216,12 @@ const RegisterStep1 = ({ onNext }) => {
             <div>
               <button
                 type="submit"
-                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-semibold text-white transition-all cursor-pointer ${
+                disabled={loading}
+                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-50 ${
                   role === 'government' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
                 }`}
               >
-                Proceed to Next Step &rarr;
+                {loading ? 'Checking Email...' : 'Proceed to Next Step \u2192'}
               </button>
             </div>
           </form>

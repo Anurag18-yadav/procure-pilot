@@ -7,6 +7,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   // State for Forgot Password Modal
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -17,7 +18,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -39,25 +40,42 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
         onNavigate('government-portal');
       }
     } else {
-      // Startup Database & Credential Verification
-      const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
-      const identifierVal = credentials.identifier.trim();
-      const passwordVal = credentials.password;
+      // Startup Sign-in via FastAPI Backend & MongoDB Atlas
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:8000/api/login-startup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            identifier: credentials.identifier.trim(),
+            password: credentials.password
+          }),
+        });
 
-      const foundStartup = registeredStartups.find(
-        s => (s.email === identifierVal || s.uniqueId === identifierVal) && s.password === passwordVal
-      );
+        const data = await response.json();
 
-      if (foundStartup) {
+        if (!response.ok) {
+          throw new Error(data.detail || 'Invalid Unique ID / Email or Password.');
+        }
+
+        // Successfully logged in from MongoDB database
         localStorage.setItem('userRole', 'startup');
-        localStorage.setItem('blindEvalId', foundStartup.uniqueId);
+        localStorage.setItem('blindEvalId', data.uniqueId);
+        localStorage.setItem('startupUniqueId', data.uniqueId);
+        localStorage.setItem('startupName', data.startupName);
+
         if (onSignInSuccess) {
           onSignInSuccess('startup-profile');
         } else if (onNavigate) {
           onNavigate('startup-profile');
         }
-      } else {
-        setError('Invalid Unique ID / Email or Password. Please check your credentials or register first.');
+
+      } catch (err) {
+        setError(err.message || 'Backend server se connect nahi ho pa raha hai!');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -119,7 +137,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Track proposal status</h4>
-                    <p className="text-[11px] text-slate-300">Monitor real-time evaluation metrics and review stages.</p>
+                    <p className="text-[11px] text-slate-300">Monitor real-time evaluation metrics and review stages from MongoDB.</p>
                   </div>
                 </div>
 
@@ -220,11 +238,12 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
               <div>
                 <button
                   type="submit"
-                  className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-md text-xs font-bold text-white transition-all cursor-pointer ${
+                  disabled={loading}
+                  className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-md text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-50 ${
                     loginRole === 'government' ? 'bg-blue-800 hover:bg-blue-900' : 'bg-[#8d770c] hover:bg-[#745f06]'
                   }`}
                 >
-                  Sign In &rarr;
+                  {loading ? 'Signing in...' : 'Sign In \u2192'}
                 </button>
               </div>
             </form>
