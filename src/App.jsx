@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
-import DomainExpertAIPreScreen from './components/DomainExpertAIPreScreen'; // Step 1: AI Pre-Screening Component
-import DomainExpertHumanReview from './components/DomainExpertHumanReview'; // Step 2: Human Expert Final Review Component
-import DomainExpertDashboard from './components/DomainExpertDashboard';      // Legacy Dashboard (if needed)
+import DomainExpertAIPreScreen from './components/DomainExpertAIPreScreen';
+import DomainExpertHumanReview from './components/DomainExpertHumanReview';
+import DomainExpertDashboard from './components/DomainExpertDashboard';
 import SignInPage from './components/SignInPage';
 import ChallengesPage from './components/ChallengesPage';
 import RegisterRoleSelect from './components/RegisterRoleSelect';
@@ -21,7 +21,6 @@ import StartupProfilePage from './components/StartupProfilePage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => {
-    // Check if opened via query parameter in a new tab
     const params = new URLSearchParams(window.location.search);
     if (params.get('role') === 'expert') {
       localStorage.setItem('userRole', 'expert');
@@ -46,31 +45,9 @@ export default function App() {
           currentRole = 'expert';
         }
 
-        // Allow startup profile & proposal steps if hash starts with proposal- or is startup-profile
         if ((hash === 'startup-profile' || hash.startsWith('proposal-')) && !currentRole) {
           localStorage.setItem('userRole', 'startup');
           currentRole = 'startup';
-        }
-
-        if (hash === 'government-portal' && currentRole !== 'government') {
-          alert("Access Denied: Government Portal is restricted to official government accounts.");
-          window.location.hash = 'landing';
-          setCurrentPage('landing');
-          return;
-        }
-
-        if ((hash === 'dashboard' || hash === 'human-review') && currentRole !== 'expert' && currentRole !== 'government') {
-          alert("Access Denied: Expert Panel / Dashboard is restricted to domain experts.");
-          window.location.hash = 'landing';
-          setCurrentPage('landing');
-          return;
-        }
-
-        if (hash === 'startup-profile' && currentRole !== 'startup' && currentRole !== 'government') {
-          alert("Access Denied: Startup Profile is restricted to startup accounts.");
-          window.location.hash = 'landing';
-          setCurrentPage('landing');
-          return;
         }
 
         setCurrentPage(hash);
@@ -103,7 +80,6 @@ export default function App() {
         />
       )}
 
-      {/* STEP 1: AI Pre-Screening Page */}
       {currentPage === 'dashboard' && (
         <DomainExpertAIPreScreen 
           onProceedToHumanReview={() => navigateTo('human-review')}
@@ -111,7 +87,6 @@ export default function App() {
         />
       )}
 
-      {/* STEP 2: Human Expert Final Review Page */}
       {currentPage === 'human-review' && (
         <DomainExpertHumanReview 
           onNavigate={navigateTo}
@@ -154,6 +129,8 @@ export default function App() {
             setSelectedRole(role);
             localStorage.setItem('tempRole', role);
             localStorage.removeItem('userRole'); 
+            localStorage.removeItem('regStep1');
+            localStorage.removeItem('startupSector');
             navigateTo('register-1');
           }}
           onNavigate={navigateTo}
@@ -185,7 +162,7 @@ export default function App() {
           />
         ) : (
           <RegisterStep1 
-            onNext={() => navigateTo('register-2')}
+            onNext={() => navigateTo('register-2')} 
             onNavigate={navigateTo}
           />
         )
@@ -199,16 +176,36 @@ export default function App() {
         />
       )}
 
+      {/* STEP 3 */}
       {currentPage === 'register-3' && (
         <RegisterStep3 
-          onComplete={() => {
+          onComplete={() => navigateTo('register-4')}
+          onBack={() => navigateTo('register-2')}
+          onNavigate={navigateTo}
+        />
+      )}
+
+      {/* STEP 4 (Using SubmitProposalStep1 component layout for registration step 4) */}
+      {currentPage === 'register-4' && (
+        <SubmitProposalStep1 
+          onNext={() => navigateTo('register-5')}
+          onBack={() => navigateTo('register-3')}
+          onNavigate={navigateTo}
+        />
+      )}
+
+      {/* STEP 5 (Final Registration Step) */}
+      {currentPage === 'register-5' && (
+        <SubmitProposalStep2 
+          onSubmit={() => {
             const role = localStorage.getItem('tempRole') || 'startup';
             localStorage.setItem('userRole', role);
             localStorage.removeItem('tempRole');
-            alert("Startup Registration Completed & Verified under MeitY Sandbox!");
+            alert("Startup Registration & 5-Step Pipeline Completed Successfully!");
             navigateTo('startup-profile');
           }}
-          onBack={() => navigateTo('register-2')}
+          onBack={() => navigateTo('register-4')}
+          onNavigate={navigateTo}
         />
       )}
 

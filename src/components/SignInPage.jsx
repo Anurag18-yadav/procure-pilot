@@ -39,11 +39,25 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
         onNavigate('government-portal');
       }
     } else {
-      localStorage.setItem('userRole', 'startup');
-      if (onSignInSuccess) {
-        onSignInSuccess('startup-profile');
-      } else if (onNavigate) {
-        onNavigate('startup-profile');
+      // Startup Database & Credential Verification
+      const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
+      const identifierVal = credentials.identifier.trim();
+      const passwordVal = credentials.password;
+
+      const foundStartup = registeredStartups.find(
+        s => (s.email === identifierVal || s.uniqueId === identifierVal) && s.password === passwordVal
+      );
+
+      if (foundStartup) {
+        localStorage.setItem('userRole', 'startup');
+        localStorage.setItem('blindEvalId', foundStartup.uniqueId);
+        if (onSignInSuccess) {
+          onSignInSuccess('startup-profile');
+        } else if (onNavigate) {
+          onNavigate('startup-profile');
+        }
+      } else {
+        setError('Invalid Unique ID / Email or Password. Please check your credentials or register first.');
       }
     }
   };
@@ -168,7 +182,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {loginRole === 'government' ? 'Official Government Email (.gov.in / .nic.in)' : 'Email address'}
+                  {loginRole === 'government' ? 'Official Government Email (.gov.in / .nic.in)' : 'Email address or Unique Blind ID'}
                 </label>
                 <input
                   type="text"
@@ -176,7 +190,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                   value={credentials.identifier}
                   onChange={handleChange}
                   required
-                  placeholder={loginRole === 'government' ? 'officer.name@gov.in' : 'name@company.com'}
+                  placeholder={loginRole === 'government' ? 'officer.name@gov.in' : 'name@company.com or BLIND-EVAL-XXXXXX'}
                   className="w-full border border-gray-300 rounded-xl shadow-xs p-2.5 text-xs focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>

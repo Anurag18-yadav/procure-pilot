@@ -4,7 +4,7 @@ const RegisterStep1 = ({ onNext }) => {
   const [role, setRole] = useState('startup');
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('userRole');
+    const savedRole = localStorage.getItem('userRole') || localStorage.getItem('tempRole');
     if (savedRole) {
       setRole(savedRole);
     }
@@ -21,7 +21,16 @@ const RegisterStep1 = ({ onNext }) => {
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Cross-verification: Phone field me sirf numbers allow honge aur max 10 digits
+    if (name === 'phone') {
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({ ...formData, [name]: numericValue });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleNext = (e) => {
@@ -29,28 +38,46 @@ const RegisterStep1 = ({ onNext }) => {
     setError('');
 
     // Validations
-    if (!formData.fullName || !formData.startupName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+    if (!formData.fullName.trim() || !formData.startupName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all required fields.');
       return;
     }
+
+    // Name validation (Only alphabets and spaces)
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(formData.fullName)) {
+      setError('Full Name should only contain alphabets and spaces.');
+      return;
+    }
+
+    // Phone validation
     if (formData.phone.length !== 10) {
       setError('Phone number must be exactly 10 digits.');
       return;
     }
+
+    // Password match validation
     if (formData.password !== formData.confirmPassword) {
       setError('Password and Confirm Password do not match.');
+      return;
+    }
+
+    // DUPLICATE EMAIL DATABASE CHECK
+    const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
+    const enteredEmail = formData.email.trim().toLowerCase();
+    const existingUser = registeredStartups.find(s => s.email && s.email.toLowerCase() === enteredEmail);
+
+    if (existingUser) {
+      setError('This email is already registered! Please use the Sign In page or login with your credentials.');
       return;
     }
 
     // Save data to localStorage
     localStorage.setItem('regStep1', JSON.stringify(formData));
     
-    // Proceed to next step smoothly
-    if (typeof onNext === 'function') {
-      onNext();
-    } else {
-      window.location.hash = 'register-2';
-    }
+    // Strict Hash Navigation to Step 2
+    window.location.hash = 'register-2';
+    window.location.reload();
   };
 
   return (
@@ -62,7 +89,7 @@ const RegisterStep1 = ({ onNext }) => {
           {role === 'government' ? 'Government Registration - Step 1' : 'Startup Registration - Step 1'}
         </span>
         <h2 className="mt-3 text-3xl font-extrabold text-gray-900">
-          Basic Information & Credentials
+          Basic Information &amp; Credentials
         </h2>
         <p className="mt-2 text-sm text-gray-600">
           {role === 'government' ? 'Enter your personal credentials before department verification.' : 'Enter your founder details and credentials.'}
