@@ -32,20 +32,7 @@ export default function Navbar({ onNavigate }) {
   };
 
   const handleChallengesClick = () => {
-    const role = localStorage.getItem('userRole');
-    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
-
-    // Strict protection: Agar user logged-in nahi hai toh challenges explore karne se roko
-    if (!role || !uniqueId) {
-      alert("Please register or sign in first to explore government challenges and submit proposals!");
-      if (onNavigate) {
-        onNavigate('signin');
-      } else {
-        window.location.hash = 'signin';
-      }
-      return;
-    }
-
+    // Public access: Open challenges directly without any alert or login restriction
     if (onNavigate) {
       onNavigate('challenges');
     } else {

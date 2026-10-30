@@ -1,24 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Navbar from './Navbar';
 
 export default function LandingPage({ onNavigate, onLogin, onRegister, onExploreChallenges }) {
-
-  // Instant Route Guard: Agar user bina login ke challenges ya protected page par aane ki koshish kare
-  useEffect(() => {
-    const currentHash = window.location.hash;
-    const userRole = localStorage.getItem('userRole');
-    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
-
-    if ((currentHash.includes('challenges') || currentHash.includes('proposal')) && (!userRole || !uniqueId)) {
-      alert("Unauthorized access! Please register or sign in first to access challenges and proposals.");
-      if (onNavigate) {
-        onNavigate('signin');
-      } else {
-        window.location.hash = 'signin';
-      }
-    }
-  }, []);
-
+  
   const handleExploreChallengesClick = () => {
     const userRole = localStorage.getItem('userRole');
     const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');

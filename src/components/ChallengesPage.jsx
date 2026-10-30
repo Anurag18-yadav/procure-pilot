@@ -4,6 +4,9 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSector, setSelectedSector] = useState('All');
 
+  // State for Modern Login Required Modal Popup
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   const challengesList = [
     {
       id: 'PRP-CH-044',
@@ -55,13 +58,28 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
     return matchesSearch && matchesSector;
   });
 
+  const handleApplyClick = () => {
+    const userRole = localStorage.getItem('userRole');
+    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
+
+    // Agar user logged-in nahi hai, toh modern modal dikhao
+    if (!userRole || !uniqueId) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    // Agar logged-in hai toh proposal submission page kholne do
+    const proposalUrl = `${window.location.origin}${window.location.pathname}#proposal-1`;
+    window.open(proposalUrl, '_blank');
+  };
+
   return (
-    <div className="w-full min-h-screen bg-[#f8f9fb] text-[#191c1e] font-sans antialiased flex flex-col">
+    <div className="w-full min-h-screen bg-[#f8f9fb] text-[#191c1e] font-sans antialiased flex flex-col relative">
       
       {/* NAVBAR */}
       <header className="bg-white border-b border-[#c4c6cf] sticky top-0 z-50">
         <div className="w-full max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('landing')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate ? onNavigate('landing') : (window.location.hash = 'landing')}>
             <div className="w-10 h-10 rounded-full bg-[#0b2447] border border-[#d4af37]/60 flex items-center justify-center text-white">
               <svg className="w-5 h-5 transform rotate-45" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -77,7 +95,7 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
           </div>
           <div>
             <button 
-              onClick={() => onNavigate('landing')}
+              onClick={() => onNavigate ? onNavigate('landing') : (window.location.hash = 'landing')}
               className="text-xs font-semibold text-gray-600 hover:text-[#0b2447] cursor-pointer"
             >
               Back to Home
@@ -161,10 +179,7 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
                   <span className="text-xs text-gray-500">{item.applicants} Startups Applied</span>
                   <button 
                     type="button"
-                    onClick={() => {
-                      const proposalUrl = `${window.location.origin}${window.location.pathname}#proposal-1`;
-                      window.open(proposalUrl, '_blank');
-                    }}
+                    onClick={handleApplyClick}
                     className="px-4 py-2 bg-[#0b2447] text-white text-xs font-bold rounded-xl hover:bg-[#00172e] cursor-pointer flex items-center gap-1"
                   >
                     Apply Now <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -192,10 +207,53 @@ export default function ChallengesPage({ onNavigate, onSubmitProposal }) {
 
       </main>
 
+      {/* MODERN LOGIN REQUIRED MODAL POPUP */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0b1329] border border-amber-500/30 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6 transform animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-3xl mx-auto border border-amber-500/40">
+              🔒
+            </div>
+            <div className="space-y-2">
+              <span className="text-[10px] font-extrabold tracking-widest text-amber-400 uppercase bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                AUTHENTICATION REQUIRED
+              </span>
+              <h3 className="text-xl font-extrabold text-white">Sign In to Submit Proposal</h3>
+              <p className="text-xs text-gray-300">
+                You can freely browse all government challenges. However, to apply and submit proposals under GFR 149(v), please sign in or register your startup.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(false)}
+                className="w-1/2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Continue Browsing
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLoginModal(false);
+                  if (onNavigate) {
+                    onNavigate('signin');
+                  } else {
+                    window.location.hash = 'signin';
+                  }
+                }}
+                className="w-1/2 py-3 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                Sign In Now →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className="bg-[#000f27] text-white border-t border-[#c4c6cf] mt-auto">
         <div className="max-w-7xl mx-auto px-6 py-6 text-center text-xs text-gray-400">
-          © 2026 ProcurePilot India. GFR 2017 Public Innovation Procurement Framework.
+          &copy; 2026 ProcurePilot India. GFR 2017 Public Innovation Procurement Framework.
         </div>
       </footer>
     </div>
