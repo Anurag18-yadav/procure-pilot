@@ -27,7 +27,7 @@ const RegisterStep1 = ({ onNext }) => {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:8000';
     }
-    // Aapke cloud backend ka live URL yahan configured hai (Render/Railway/etc.)
+    // Live cloud backend URL
     return 'https://procurepilot-api.onrender.com'; 
   };
 
@@ -77,6 +77,11 @@ const RegisterStep1 = ({ onNext }) => {
 
     try {
       const baseUrl = getApiBaseUrl();
+      
+      // Timeout controller (5 seconds limit so it doesn't hang)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       // Check duplicate email against FastAPI /api/check-email before proceeding
       const response = await fetch(`${baseUrl}/api/check-email`, {
         method: 'POST',
@@ -84,8 +89,10 @@ const RegisterStep1 = ({ onNext }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email: formData.email.trim() }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (!response.ok) {
@@ -95,10 +102,18 @@ const RegisterStep1 = ({ onNext }) => {
       }
 
     } catch (err) {
-      console.error("Backend pre-check connection error:", err);
-      setError('Unable to connect to the backend server. Please ensure the backend is live.');
-      setLoading(false);
-      return;
+      console.warn("Backend pre-check connection error, using local fallback:", err);
+      
+      // Fallback: Check against localStorage registered startups if backend is offline/slow
+      const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
+      const enteredEmail = formData.email.trim().toLowerCase();
+      const existingUser = registeredStartups.find(s => s.email && s.email.toLowerCase() === enteredEmail);
+
+      if (existingUser) {
+        setError('This email is already registered! Please sign in using your credentials.');
+        setLoading(false);
+        return;
+      }
     } finally {
       setLoading(false);
     }
