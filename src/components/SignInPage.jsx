@@ -50,7 +50,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
       return;
     }
 
-    // Startup & Expert Sign-in via FastAPI Backend & MongoDB Atlas or Fallback
+    // Startup & Expert Sign-in via Unique Blind ID & Password
     setLoading(true);
     try {
       const baseUrl = getApiBaseUrl();
@@ -73,7 +73,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Invalid Unique ID / Email or Password.');
+        throw new Error(data.detail || 'Invalid Unique ID or Password.');
       }
 
       // Successfully logged in from MongoDB database
@@ -92,10 +92,10 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
     } catch (err) {
       console.warn("Backend login fallback check:", err);
       
-      // Fallback check against local storage registered users
+      // Fallback check against local storage registered users using Unique ID
       const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
       const matchedUser = registeredStartups.find(
-        s => (s.email.toLowerCase() === credentials.identifier.trim().toLowerCase() || s.uniqueId === credentials.identifier.trim()) && s.password === credentials.password
+        s => s.uniqueId === credentials.identifier.trim() && s.password === credentials.password
       );
 
       if (matchedUser || loginRole === 'expert') {
@@ -112,7 +112,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
         return;
       }
 
-      setError('Galat Unique ID/Email ya Password hai! Kripya dobara koshish karein.');
+      setError('Invalid Unique ID or Password! Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
       setForgotMessage('Please enter your registered email address.');
       return;
     }
-    setForgotMessage('Password reset link has been successfully sent to your registered email address.');
+    setForgotMessage('Password reset instructions have been successfully sent to your email.');
     setTimeout(() => {
       setShowForgotModal(false);
       setForgotMessage('');
@@ -200,7 +200,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
           <div className="md:col-span-7 p-8 sm:p-10 flex flex-col justify-center bg-white">
             <div className="mb-6">
               <h3 className="text-xl font-extrabold text-gray-900">Sign in to ProcurePilot</h3>
-              <p className="text-xs text-gray-500 mt-1">Select your role and enter your credentials to access your workspace.</p>
+              <p className="text-xs text-gray-500 mt-1">Select your role and enter your unique credentials to access your workspace.</p>
             </div>
 
             {/* Role Toggle Tabs */}
@@ -252,8 +252,8 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                   {loginRole === 'government' 
                     ? 'Official Government Email (.gov.in / .nic.in)' 
                     : loginRole === 'expert'
-                    ? 'Expert ID or Email'
-                    : 'Email address or Unique Blind ID'}
+                    ? 'Expert Unique ID'
+                    : 'Unique Blind ID'}
                 </label>
                 <input
                   type="text"
@@ -265,10 +265,10 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                     loginRole === 'government' 
                       ? 'officer.name@gov.in' 
                       : loginRole === 'expert'
-                      ? 'EXPERT-9901 or email@domain.in'
-                      : 'name@company.com or BLIND-EVAL-XXXXXX'
+                      ? 'EXPERT-9901'
+                      : 'BLIND-EVAL-XXXXXX'
                   }
-                  className="w-full border border-gray-300 rounded-xl shadow-xs p-2.5 text-xs focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full border border-gray-300 rounded-xl shadow-xs p-2.5 text-xs focus:ring-amber-500 focus:border-amber-500 font-mono"
                 />
               </div>
 
