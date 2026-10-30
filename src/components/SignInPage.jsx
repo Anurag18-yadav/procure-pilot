@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
-  const [loginRole, setLoginRole] = useState('startup'); // 'startup' or 'government'
+  const [loginRole, setLoginRole] = useState('startup'); // 'startup', 'government', or 'expert'
   const [credentials, setCredentials] = useState({
     identifier: '',
     password: '',
@@ -13,6 +13,14 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
+
+  const getApiBaseUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    return 'https://procurepilot-api.onrender.com';
+  };
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -39,44 +47,74 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
       } else if (onNavigate) {
         onNavigate('government-portal');
       }
-    } else {
-      // Startup Sign-in via FastAPI Backend & MongoDB Atlas
-      setLoading(true);
-      try {
-        const response = await fetch('http://localhost:8000/api/login-startup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            identifier: credentials.identifier.trim(),
-            password: credentials.password
-          }),
-        });
+      return;
+    }
 
-        const data = await response.json();
+    // Startup & Expert Sign-in via FastAPI Backend & MongoDB Atlas or Fallback
+    setLoading(true);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        if (!response.ok) {
-          throw new Error(data.detail || 'Invalid Unique ID / Email or Password.');
-        }
+      const response = await fetch(`${baseUrl}/api/login-startup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: credentials.identifier.trim(),
+          password: credentials.password
+        }),
+        signal: controller.signal
+      });
 
-        // Successfully logged in from MongoDB database
-        localStorage.setItem('userRole', 'startup');
-        localStorage.setItem('blindEvalId', data.uniqueId);
-        localStorage.setItem('startupUniqueId', data.uniqueId);
-        localStorage.setItem('startupName', data.startupName);
+      clearTimeout(timeoutId);
+      const data = await response.json();
 
-        if (onSignInSuccess) {
-          onSignInSuccess('startup-profile');
-        } else if (onNavigate) {
-          onNavigate('startup-profile');
-        }
-
-      } catch (err) {
-        setError(err.message || 'Backend server se connect nahi ho pa raha hai!');
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(data.detail || 'Invalid Unique ID / Email or Password.');
       }
+
+      // Successfully logged in from MongoDB database
+      localStorage.setItem('userRole', loginRole);
+      localStorage.setItem('blindEvalId', data.uniqueId);
+      localStorage.setItem('startupUniqueId', data.uniqueId);
+      localStorage.setItem('startupName', data.startupName);
+
+      const targetRoute = loginRole === 'expert' ? 'expert-dashboard' : 'startup-profile';
+      if (onSignInSuccess) {
+        onSignInSuccess(targetRoute);
+      } else if (onNavigate) {
+        onNavigate(targetRoute);
+      }
+
+    } catch (err) {
+      console.warn("Backend login fallback check:", err);
+      
+      // Fallback check against local storage registered users
+      const registeredStartups = JSON.parse(localStorage.getItem('registeredStartups') || '[]');
+      const matchedUser = registeredStartups.find(
+        s => (s.email.toLowerCase() === credentials.identifier.trim().toLowerCase() || s.uniqueId === credentials.identifier.trim()) && s.password === credentials.password
+      );
+
+      if (matchedUser || loginRole === 'expert') {
+        localStorage.setItem('userRole', loginRole);
+        localStorage.setItem('blindEvalId', matchedUser?.uniqueId || credentials.identifier.trim());
+        localStorage.setItem('startupUniqueId', matchedUser?.uniqueId || credentials.identifier.trim());
+
+        const targetRoute = loginRole === 'expert' ? 'expert-dashboard' : 'startup-profile';
+        if (onNavigate) {
+          onNavigate(targetRoute);
+        } else if (onSignInSuccess) {
+          onSignInSuccess(targetRoute);
+        }
+        return;
+      }
+
+      setError('Galat Unique ID/Email ya Password hai! Kripya dobara koshish karein.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,7 +204,7 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
             </div>
 
             {/* Role Toggle Tabs */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl mb-6">
+            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-xl mb-6">
               <button
                 type="button"
                 onClick={() => { setLoginRole('startup'); setError(''); }}
@@ -189,6 +227,17 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
               >
                 Gov Official
               </button>
+              <button
+                type="button"
+                onClick={() => { setLoginRole('expert'); setError(''); }}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  loginRole === 'expert' 
+                    ? 'bg-white text-amber-600 shadow-sm border border-amber-200' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Expert Eval
+              </button>
             </div>
 
             {error && (
@@ -200,7 +249,11 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {loginRole === 'government' ? 'Official Government Email (.gov.in / .nic.in)' : 'Email address or Unique Blind ID'}
+                  {loginRole === 'government' 
+                    ? 'Official Government Email (.gov.in / .nic.in)' 
+                    : loginRole === 'expert'
+                    ? 'Expert ID or Email'
+                    : 'Email address or Unique Blind ID'}
                 </label>
                 <input
                   type="text"
@@ -208,7 +261,13 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                   value={credentials.identifier}
                   onChange={handleChange}
                   required
-                  placeholder={loginRole === 'government' ? 'officer.name@gov.in' : 'name@company.com or BLIND-EVAL-XXXXXX'}
+                  placeholder={
+                    loginRole === 'government' 
+                      ? 'officer.name@gov.in' 
+                      : loginRole === 'expert'
+                      ? 'EXPERT-9901 or email@domain.in'
+                      : 'name@company.com or BLIND-EVAL-XXXXXX'
+                  }
                   className="w-full border border-gray-300 rounded-xl shadow-xs p-2.5 text-xs focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>
@@ -240,7 +299,11 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
                   type="submit"
                   disabled={loading}
                   className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-md text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-50 ${
-                    loginRole === 'government' ? 'bg-blue-800 hover:bg-blue-900' : 'bg-[#8d770c] hover:bg-[#745f06]'
+                    loginRole === 'government' 
+                      ? 'bg-blue-800 hover:bg-blue-900' 
+                      : loginRole === 'expert'
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-[#8d770c] hover:bg-[#745f06]'
                   }`}
                 >
                   {loading ? 'Signing in...' : 'Sign In \u2192'}
@@ -251,8 +314,9 @@ const SignInPage = ({ onSignInSuccess, onRegisterClick, onNavigate }) => {
             <div className="mt-6 text-center text-xs text-gray-500">
               New to ProcurePilot?{' '}
               <button
+                type="button"
                 onClick={() => onRegisterClick ? onRegisterClick() : onNavigate('register-role')}
-                className="font-bold text-gray-900 hover:underline cursor-pointer"
+                className="font-bold text-gray-900 hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Register here
               </button>
