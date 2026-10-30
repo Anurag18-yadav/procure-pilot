@@ -7,7 +7,10 @@ export default function Navbar({ onNavigate }) {
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
-    if (role) {
+    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
+    
+    // Strict session check: User tabhi logged-in maana jayega jab role ke sath valid Unique ID ya Government role ho
+    if (role && (uniqueId || role === 'government')) {
       setUser(true);
       setUserRole(role);
     } else {
@@ -53,8 +56,7 @@ export default function Navbar({ onNavigate }) {
   };
 
   const handleExpertsClick = () => {
-    // Set expert role and open using query param to prevent blank screen in new tab
-    localStorage.setItem('userRole', 'expert');
+    // Open expert portal without corrupting local session state
     const expertUrl = `${window.location.origin}${window.location.pathname}?role=expert`;
     window.open(expertUrl, '_blank');
   };
@@ -107,7 +109,6 @@ export default function Navbar({ onNavigate }) {
 
             <button type="button" onClick={() => onNavigate ? onNavigate('startup-profile') : (window.location.href = '#/startup-profile')} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Startups</button>
             
-            {/* For Experts opens in a new tab via handleExpertsClick */}
             <button type="button" onClick={handleExpertsClick} className="hover:text-[#0b2447] transition-colors cursor-pointer flex items-center gap-1">
               For Experts <span className="material-symbols-outlined text-[14px]">open_in_new</span>
             </button>
