@@ -1,7 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from './Navbar';
 
 export default function LandingPage({ onNavigate, onLogin, onRegister, onExploreChallenges }) {
+
+  // Instant Route Guard: Agar user bina login ke challenges ya protected page par aane ki koshish kare
+  useEffect(() => {
+    const currentHash = window.location.hash;
+    const userRole = localStorage.getItem('userRole');
+    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
+
+    if ((currentHash.includes('challenges') || currentHash.includes('proposal')) && (!userRole || !uniqueId)) {
+      alert("Unauthorized access! Please register or sign in first to access challenges and proposals.");
+      if (onNavigate) {
+        onNavigate('signin');
+      } else {
+        window.location.hash = 'signin';
+      }
+    }
+  }, []);
+
+  const handleExploreChallengesClick = () => {
+    const userRole = localStorage.getItem('userRole');
+    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
+
+    // Strict check: Agar user logged-in nahi hai, toh challenge explore block karke login page par bhejo
+    if (!userRole || !uniqueId) {
+      alert("Please register or sign in first to explore government challenges and submit proposals!");
+      if (onNavigate) {
+        onNavigate('signin');
+      } else {
+        window.location.hash = 'signin';
+      }
+      return;
+    }
+
+    // Agar logged-in hai toh challenges page par jaane do
+    if (onExploreChallenges) {
+      onExploreChallenges();
+    } else if (onNavigate) {
+      onNavigate('challenges');
+    } else {
+      window.location.hash = 'challenges';
+    }
+  };
+
   return (
     <div className="w-full min-h-screen bg-[#f8f9fb] text-[#191c1e] font-sans selection:bg-[#cadaff]">
       <Navbar onNavigate={onNavigate} />
@@ -24,7 +66,7 @@ export default function LandingPage({ onNavigate, onLogin, onRegister, onExplore
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
           <button 
             type="button"
-            onClick={onExploreChallenges}
+            onClick={handleExploreChallengesClick}
             className="w-full sm:w-auto px-7 py-3.5 bg-[#0b2447] text-white font-bold text-sm rounded-xl hover:bg-[#00172e] transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-2"
           >
             Explore Challenges <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -94,7 +136,7 @@ export default function LandingPage({ onNavigate, onLogin, onRegister, onExplore
 
             <div className="bg-white p-6 rounded-2xl border border-[#c4c6cf] shadow-xs">
               <span className="w-10 h-10 rounded-xl bg-[#0b2447] text-white font-bold flex items-center justify-center text-base mb-4">4</span>
-              <h3 className="font-bold text-[#000f27] text-base mb-2">Monitored Pilot & Scale</h3>
+              <h3 className="font-bold text-[#000f27] text-base mb-2">Monitored Pilot &amp; Scale</h3>
               <p className="text-xs text-[#44474e] leading-relaxed">
                 Successful stress-tested pilots directly qualify for government direct procurement contracts.
               </p>
@@ -125,7 +167,7 @@ export default function LandingPage({ onNavigate, onLogin, onRegister, onExplore
           </div>
         </div>
         <div className="w-full max-w-7xl mx-auto px-6 py-4 border-t border-white/10 text-center text-xs text-gray-400">
-          © 2026 ProcurePilot India. All statutory rights reserved under MeitY Sandbox Framework.
+          &copy; 2026 ProcurePilot India. All statutory rights reserved under MeitY Sandbox Framework.
         </div>
       </footer>
     </div>

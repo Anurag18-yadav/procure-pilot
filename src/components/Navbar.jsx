@@ -31,6 +31,28 @@ export default function Navbar({ onNavigate }) {
     }, 100);
   };
 
+  const handleChallengesClick = () => {
+    const role = localStorage.getItem('userRole');
+    const uniqueId = localStorage.getItem('startupUniqueId') || localStorage.getItem('blindEvalId');
+
+    // Strict protection: Agar user logged-in nahi hai toh challenges explore karne se roko
+    if (!role || !uniqueId) {
+      alert("Please register or sign in first to explore government challenges and submit proposals!");
+      if (onNavigate) {
+        onNavigate('signin');
+      } else {
+        window.location.hash = 'signin';
+      }
+      return;
+    }
+
+    if (onNavigate) {
+      onNavigate('challenges');
+    } else {
+      window.location.hash = 'challenges';
+    }
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -56,7 +78,6 @@ export default function Navbar({ onNavigate }) {
   };
 
   const handleExpertsClick = () => {
-    // Open expert portal without corrupting local session state
     const expertUrl = `${window.location.origin}${window.location.pathname}?role=expert`;
     window.open(expertUrl, '_blank');
   };
@@ -103,7 +124,7 @@ export default function Navbar({ onNavigate }) {
           {/* Center Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-8 text-sm font-medium text-[#333b4c]">
             <button type="button" onClick={handleHowItWorksClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">How it Works</button>
-            <button type="button" onClick={() => onNavigate ? onNavigate('challenges') : (window.location.href = '#/challenges')} className="hover:text-[#0b2447] transition-colors cursor-pointer">Challenges</button>
+            <button type="button" onClick={handleChallengesClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">Challenges</button>
             
             <button type="button" onClick={handleGovPortalClick} className="hover:text-[#0b2447] transition-colors cursor-pointer">For Government</button>
 
