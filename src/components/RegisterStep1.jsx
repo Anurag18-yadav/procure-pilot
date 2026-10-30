@@ -21,6 +21,16 @@ const RegisterStep1 = ({ onNext }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Dynamic API base URL switcher (Local vs Production Vercel)
+  const getApiBaseUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    // Aapke cloud backend ka live URL yahan configured hai (Render/Railway/etc.)
+    return 'https://procurepilot-api.onrender.com'; 
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -66,8 +76,9 @@ const RegisterStep1 = ({ onNext }) => {
     setLoading(true);
 
     try {
+      const baseUrl = getApiBaseUrl();
       // Check duplicate email against FastAPI /api/check-email before proceeding
-      const response = await fetch('http://localhost:8000/api/check-email', {
+      const response = await fetch(`${baseUrl}/api/check-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +96,7 @@ const RegisterStep1 = ({ onNext }) => {
 
     } catch (err) {
       console.error("Backend pre-check connection error:", err);
-      setError('Backend server se connect nahi ho pa raha hai!');
+      setError('Unable to connect to the backend server. Please ensure the backend is live.');
       setLoading(false);
       return;
     } finally {
